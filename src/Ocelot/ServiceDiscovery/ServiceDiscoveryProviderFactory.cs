@@ -1,15 +1,14 @@
 namespace Ocelot.ServiceDiscovery
 {
-    using System.Collections.Generic;
+    using Microsoft.Extensions.DependencyInjection;
     using Ocelot.Configuration;
     using Ocelot.Logging;
+    using Ocelot.Responses;
     using Ocelot.ServiceDiscovery.Configuration;
     using Ocelot.ServiceDiscovery.Providers;
     using Ocelot.Values;
     using System;
-    using System.Linq;
-    using Microsoft.Extensions.DependencyInjection;
-    using Ocelot.Responses;
+    using System.Collections.Generic;
 
     public class ServiceDiscoveryProviderFactory : IServiceDiscoveryProviderFactory
     {
@@ -28,7 +27,7 @@ namespace Ocelot.ServiceDiscovery
         {
             if (reRoute.UseServiceDiscovery)
             {
-                return GetServiceDiscoveryProvider(serviceConfig, reRoute.ServiceName);
+                return GetServiceDiscoveryProvider(serviceConfig, reRoute);
             }
 
             var services = new List<Service>();
@@ -43,19 +42,19 @@ namespace Ocelot.ServiceDiscovery
             return new OkResponse<IServiceDiscoveryProvider>(new ConfigurationServiceProvider(services));
         }
 
-        private Response<IServiceDiscoveryProvider> GetServiceDiscoveryProvider(ServiceProviderConfiguration config, string key)
+        private Response<IServiceDiscoveryProvider> GetServiceDiscoveryProvider(ServiceProviderConfiguration config, DownstreamReRoute reRoute)
         {
             if (config.Type?.ToLower() == "servicefabric")
             {
-                var sfConfig = new ServiceFabricConfiguration(config.Host, config.Port, key);
+                var sfConfig = new ServiceFabricConfiguration(config.Host, config.Port, reRoute.ServiceName);
                 return new OkResponse<IServiceDiscoveryProvider>(new ServiceFabricServiceDiscoveryProvider(sfConfig));
             }
 
             if (_delegates != null)
             {
-                var provider = _delegates?.Invoke(_provider, config, key);
+                var provider = _delegates?.Invoke(_provider, config, reRoute);
 
-                if(provider.GetType().Name.ToLower() == config.Type.ToLower())
+                if (provider.GetType().Name.ToLower() == config.Type.ToLower())
                 {
                     return new OkResponse<IServiceDiscoveryProvider>(provider);
                 }

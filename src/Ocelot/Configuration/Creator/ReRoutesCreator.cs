@@ -1,10 +1,10 @@
 namespace Ocelot.Configuration.Creator
 {
+    using Builder;
+    using Cache;
+    using File;
     using System.Collections.Generic;
     using System.Linq;
-    using Cache;
-    using Builder;
-    using File;
 
     public class ReRoutesCreator : IReRoutesCreator
     {
@@ -21,6 +21,7 @@ namespace Ocelot.Configuration.Creator
         private readonly IHeaderFindAndReplaceCreator _headerFAndRCreator;
         private readonly IDownstreamAddressesCreator _downstreamAddressesCreator;
         private readonly IReRouteKeyCreator _reRouteKeyCreator;
+        private readonly ISecurityOptionsCreator _securityOptionsCreator;
 
         public ReRoutesCreator(
             IClaimsToThingCreator claimsToThingCreator,
@@ -35,7 +36,8 @@ namespace Ocelot.Configuration.Creator
             IHeaderFindAndReplaceCreator headerFAndRCreator,
             IDownstreamAddressesCreator downstreamAddressesCreator,
             ILoadBalancerOptionsCreator loadBalancerOptionsCreator,
-            IReRouteKeyCreator reRouteKeyCreator
+            IReRouteKeyCreator reRouteKeyCreator,
+            ISecurityOptionsCreator securityOptionsCreator
             )
         {
             _reRouteKeyCreator = reRouteKeyCreator;
@@ -52,6 +54,7 @@ namespace Ocelot.Configuration.Creator
             _fileReRouteOptionsCreator = fileReRouteOptionsCreator;
             _httpHandlerOptionsCreator = httpHandlerOptionsCreator;
             _loadBalancerOptionsCreator = loadBalancerOptionsCreator;
+            _securityOptionsCreator = securityOptionsCreator;
         }
 
         public List<ReRoute> Create(FileConfiguration fileConfiguration)
@@ -83,6 +86,8 @@ namespace Ocelot.Configuration.Creator
 
             var claimsToQueries = _claimsToThingCreator.Create(fileReRoute.AddQueriesToRequest);
 
+            var claimsToDownstreamPath = _claimsToThingCreator.Create(fileReRoute.ChangeDownstreamPathTemplate);
+
             var qosOptions = _qosOptionsCreator.Create(fileReRoute.QoSOptions, fileReRoute.UpstreamPathTemplate, fileReRoute.UpstreamHttpMethod);
 
             var rateLimitOption = _rateLimitOptionsCreator.Create(fileReRoute.RateLimitOptions, globalConfiguration);
@@ -97,6 +102,8 @@ namespace Ocelot.Configuration.Creator
 
             var lbOptions = _loadBalancerOptionsCreator.Create(fileReRoute.LoadBalancerOptions);
 
+            var securityOptions = _securityOptionsCreator.Create(fileReRoute.SecurityOptions);
+
             var reRoute = new DownstreamReRouteBuilder()
                 .WithKey(fileReRoute.Key)
                 .WithDownstreamPathTemplate(fileReRoute.DownstreamPathTemplate)
@@ -109,6 +116,7 @@ namespace Ocelot.Configuration.Creator
                 .WithRouteClaimsRequirement(fileReRoute.RouteClaimsRequirement)
                 .WithIsAuthorised(fileReRouteOptions.IsAuthorised)
                 .WithClaimsToQueries(claimsToQueries)
+                .WithClaimsToDownstreamPath(claimsToDownstreamPath)
                 .WithRequestIdKey(requestIdKey)
                 .WithIsCached(fileReRouteOptions.IsCached)
                 .WithCacheOptions(new CacheOptions(fileReRoute.FileCacheOptions.TtlSeconds, region))
@@ -121,6 +129,7 @@ namespace Ocelot.Configuration.Creator
                 .WithRateLimitOptions(rateLimitOption)
                 .WithHttpHandlerOptions(httpHandlerOptions)
                 .WithServiceName(fileReRoute.ServiceName)
+                .WithServiceNamespace(fileReRoute.ServiceNamespace)
                 .WithUseServiceDiscovery(fileReRouteOptions.UseServiceDiscovery)
                 .WithUpstreamHeaderFindAndReplace(hAndRs.Upstream)
                 .WithDownstreamHeaderFindAndReplace(hAndRs.Downstream)
@@ -128,6 +137,7 @@ namespace Ocelot.Configuration.Creator
                 .WithAddHeadersToDownstream(hAndRs.AddHeadersToDownstream)
                 .WithAddHeadersToUpstream(hAndRs.AddHeadersToUpstream)
                 .WithDangerousAcceptAnyServerCertificateValidator(fileReRoute.DangerousAcceptAnyServerCertificateValidator)
+                .WithSecurityOptions(securityOptions)
                 .Build();
 
             return reRoute;

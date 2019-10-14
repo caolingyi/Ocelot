@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Ocelot.Configuration;
+﻿using Ocelot.Configuration;
 using Ocelot.DownstreamRouteFinder.UrlMatcher;
-using Ocelot.Errors;
 using Ocelot.Responses;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Ocelot.DownstreamRouteFinder.Finder
 {
@@ -28,7 +27,7 @@ namespace Ocelot.DownstreamRouteFinder.Finder
 
             foreach (var reRoute in applicableReRoutes)
             {
-                var urlMatch = _urlMatcher.Match(upstreamUrlPath, upstreamQueryString, reRoute.UpstreamTemplatePattern.Template, reRoute.UpstreamTemplatePattern.ContainsQueryString);
+                var urlMatch = _urlMatcher.Match(upstreamUrlPath, upstreamQueryString, reRoute.UpstreamTemplatePattern);
 
                 if (urlMatch.Data.Match)
                 {

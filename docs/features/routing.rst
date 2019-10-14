@@ -37,7 +37,7 @@ The DownstreamPathTemplate, DownstreamScheme and DownstreamHostAndPorts define t
 DownstreamHostAndPorts is a collection that defines the host and port of any downstream services that you wish to forward requests to. 
 Usually this will just contain a single entry but sometimes you might want to load balance requests to your downstream services and Ocelot allows you add more than one entry and then select a load balancer.
 
-The UpstreamPathTemplate is the URL that Ocelot will use to identity which DownstreamPathTemplate to use for a given request. 
+The UpstreamPathTemplate is the URL that Ocelot will use to identify which DownstreamPathTemplate to use for a given request. 
 The UpstreamHttpMethod is used so Ocelot can distinguish between requests with different HTTP verbs to the same URL. You can set a specific list of HTTP Methods or set an empty list to allow any of them. 
 
 In Ocelot you can add placeholders for variables to your Templates in the form of {something}.
@@ -140,13 +140,13 @@ The ReRoute above will only be matched when the host header value is somedomain.
 
 If you do not set UpstreamHost on a ReRoute then any host header will match it. This means that if you have two ReRoutes that are the same, apart from the UpstreamHost, where one is null and the other set Ocelot will favour the one that has been set. 
 
-This feature was requested as part of `Issue 216 <https://github.com/TomPallister/Ocelot/pull/216>`_ .
+This feature was requested as part of `Issue 216 <https://github.com/ThreeMammals/Ocelot/pull/216>`_ .
 
 Priority
 ^^^^^^^^
 
 You can define the order you want your ReRoutes to match the Upstream HttpRequest by including a "Priority" property in ocelot.json
-See `Issue 270 <https://github.com/TomPallister/Ocelot/pull/270>`_ for reference
+See `Issue 270 <https://github.com/ThreeMammals/Ocelot/pull/270>`_ for reference
 
 .. code-block:: json
 
@@ -181,7 +181,7 @@ matched /goods/{catchAll} (because this is the first ReRoute in the list!).
 Dynamic Routing
 ^^^^^^^^^^^^^^^
 
-This feature was requested in `issue 340 <https://github.com/TomPallister/Ocelot/issue/340>`_. 
+This feature was requested in `issue 340 <https://github.com/ThreeMammals/Ocelot/issues/340>`_. 
 
 The idea is to enable dynamic routing when using a service discovery provider so you don't have to provide the ReRoute config. See the docs :ref:`service-discovery` if 
 this sounds interesting to you.
@@ -189,7 +189,7 @@ this sounds interesting to you.
 Query Strings
 ^^^^^^^^^^^^^
 
-Ocelot allows you to specify a querystring as part of the DownstreamPathTemplate like the example below.
+Ocelot allows you to specify a query string as part of the DownstreamPathTemplate like the example below.
 
 .. code-block:: json
 
@@ -241,5 +241,5 @@ Ocelot will also allow you to put query string parameters in the UpstreamPathTem
         }
     }
 
-In this example Ocelot will only match requests that have a matching url path and the querystring starts with unitId=something. You can have other queries after this
+In this example Ocelot will only match requests that have a matching url path and the query string starts with unitId=something. You can have other queries after this
 but you must start with the matching parameter. Also Ocelot will swap the {unitId} parameter from the query string and use it in the downstream request path. 

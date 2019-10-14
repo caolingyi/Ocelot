@@ -1,7 +1,5 @@
 ﻿namespace Ocelot.UnitTests.DownstreamRouteFinder
 {
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Moq;
     using Ocelot.Configuration;
@@ -11,19 +9,19 @@
     using Ocelot.DownstreamRouteFinder.Middleware;
     using Ocelot.DownstreamRouteFinder.UrlMatcher;
     using Ocelot.Logging;
-    using Ocelot.Responses;
-    using Shouldly;
-    using TestStack.BDDfy;
-    using Xunit;
-    using Ocelot.Configuration.Repository;
     using Ocelot.Middleware;
     using Ocelot.Middleware.Multiplexer;
+    using Ocelot.Responses;
+    using Shouldly;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using TestStack.BDDfy;
+    using Xunit;
 
     public class DownstreamRouteFinderMiddlewareTests
     {
         private readonly Mock<IDownstreamRouteProvider> _finder;
         private readonly Mock<IDownstreamRouteProviderFactory> _factory;
-        private readonly Mock<IInternalConfigurationRepository> _repo;
         private Response<DownstreamRoute> _downstreamRoute;
         private IInternalConfiguration _config;
         private Mock<IOcelotLoggerFactory> _loggerFactory;
@@ -35,7 +33,6 @@
 
         public DownstreamRouteFinderMiddlewareTests()
         {
-            _repo = new Mock<IInternalConfigurationRepository>();
             _finder = new Mock<IDownstreamRouteProvider>();
             _factory = new Mock<IDownstreamRouteProviderFactory>();
             _factory.Setup(x => x.Get(It.IsAny<IInternalConfiguration>())).Returns(_finder.Object);
@@ -45,7 +42,7 @@
             _loggerFactory.Setup(x => x.CreateLogger<DownstreamRouteFinderMiddleware>()).Returns(_logger.Object);
             _next = context => Task.CompletedTask;
             _multiplexer = new Mock<IMultiplexer>();
-            _middleware = new DownstreamRouteFinderMiddleware(_next, _loggerFactory.Object, _factory.Object, _repo.Object, _multiplexer.Object);
+            _middleware = new DownstreamRouteFinderMiddleware(_next, _loggerFactory.Object, _factory.Object, _multiplexer.Object);
         }
 
         [Fact]
@@ -55,12 +52,12 @@
 
             var downstreamReRoute = new DownstreamReRouteBuilder()
                 .WithDownstreamPathTemplate("any old string")
-                .WithUpstreamHttpMethod(new List<string> {"Get"})
+                .WithUpstreamHttpMethod(new List<string> { "Get" })
                 .Build();
 
             this.Given(x => x.GivenTheDownStreamRouteFinderReturns(
                 new DownstreamRoute(
-                    new List<PlaceholderNameAndValue>(), 
+                    new List<PlaceholderNameAndValue>(),
                     new ReRouteBuilder()
                         .WithDownstreamReRoute(downstreamReRoute)
                         .WithUpstreamHttpMethod(new List<string> { "Get" })

@@ -1,16 +1,25 @@
 [<img src="http://threemammals.com/images/ocelot_logo.png">](http://threemammals.com/ocelot)
 
 [![Build status](https://ci.appveyor.com/api/projects/status/r6sv51qx36sis1je?branch=develop&svg=true)](https://ci.appveyor.com/project/TomPallister/ocelot-fcfpb) Windows (AppVeyor)
+
 [![Build Status](https://travis-ci.org/ThreeMammals/Ocelot.svg?branch=develop)](https://travis-ci.org/ThreeMammals/Ocelot) Linux & OSX (Travis)
+
+[![Build Status](https://dev.azure.com/ThreeMammals/Ocelot/_apis/build/status/Ocelot%20-%20Windows?branchName=develop)](https://dev.azure.com/ThreeMammals/Ocelot/_build/latest?definitionId=4&branchName=develop) Windows
+
+[![Build Status](https://dev.azure.com/ThreeMammals/Ocelot/_apis/build/status/Ocelot%20-%20MacOS?branchName=develop)](https://dev.azure.com/ThreeMammals/Ocelot/_build/latest?definitionId=3&branchName=develop) MacOS
+
+[![Build Status](https://dev.azure.com/ThreeMammals/Ocelot/_apis/build/status/Ocelot%20-%20Linux?branchName=develop)](https://dev.azure.com/ThreeMammals/Ocelot/_build/latest?definitionId=2&branchName=develop) Linux
 
 [![Windows Build history](https://buildstats.info/appveyor/chart/TomPallister/ocelot-fcfpb?branch=develop&includeBuildsFromPullRequest=false)](https://ci.appveyor.com/project/TomPallister/ocelot-fcfpb/history?branch=develop)
 
 [![Coverage Status](https://coveralls.io/repos/github/ThreeMammals/Ocelot/badge.svg?branch=develop)](https://coveralls.io/github/ThreeMammals/Ocelot?branch=develop)
 
+
+
 # Ocelot
 
 Ocelot is a .NET API Gateway. This project is aimed at people using .NET running 
-a micro services / service orientated architecture 
+a micro services / service oriented architecture 
 that need a unified point of entry into their system. However it will work with anything that speaks HTTP and run on any platform that ASP.NET Core supports.
 
 In particular I want easy integration with 
@@ -40,6 +49,7 @@ A quick list of Ocelot's capabilities for more information see the [documentatio
 * Request Aggregation
 * Service Discovery with Consul & Eureka
 * Service Fabric
+* Kubernetes 
 * WebSockets
 * Authentication
 * Authorisation
@@ -69,7 +79,7 @@ All versions can be found [here](https://www.nuget.org/packages/Ocelot/)
 
 ## Documentation
 
-Please click [here](http://ocelot.readthedocs.io/en/latest/) for the Ocleot documentation. This includes lots of information and will be helpful if you want to understand the features Ocelot currently offers.
+Please click [here](http://ocelot.readthedocs.io/en/latest/) for the Ocelot documentation. This includes lots of information and will be helpful if you want to understand the features Ocelot currently offers.
 
 ## Coming up
 
@@ -96,6 +106,3 @@ If you think this project is worth supporting financially please make a contribu
 ## Things that are currently annoying me
 
 [![](https://codescene.io/projects/697/status.svg) Get more details at **codescene.io**.](https://codescene.io/projects/697/jobs/latest-successful/results)
-
-
-

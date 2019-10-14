@@ -1,8 +1,8 @@
-﻿using System;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DiagnosticAdapter;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DiagnosticAdapter;
 using Ocelot.Middleware;
+using System;
 
 namespace Ocelot.Logging
 {
@@ -15,7 +15,6 @@ namespace Ocelot.Logging
         {
             _logger = factory.CreateLogger<OcelotDiagnosticListener>();
             _tracer = serviceProvider.GetService<ITracer>();
-
         }
 
         [DiagnosticName("Ocelot.MiddlewareException")]
@@ -60,7 +59,7 @@ namespace Ocelot.Logging
         }
 
         private void Event(HttpContext httpContext, string @event)
-        {  
+        {
             _tracer?.Event(httpContext, @event);
         }
     }

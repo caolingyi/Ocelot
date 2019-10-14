@@ -1,8 +1,5 @@
 ﻿namespace Ocelot.UnitTests.Configuration
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using Moq;
     using Ocelot.Cache;
     using Ocelot.Configuration;
@@ -11,6 +8,8 @@
     using Ocelot.Configuration.File;
     using Ocelot.Values;
     using Shouldly;
+    using System.Collections.Generic;
+    using System.Linq;
     using TestStack.BDDfy;
     using Xunit;
 
@@ -30,6 +29,7 @@
         private Mock<IDownstreamAddressesCreator> _daCreator;
         private Mock<ILoadBalancerOptionsCreator> _lboCreator;
         private Mock<IReRouteKeyCreator> _rrkCreator;
+        private Mock<ISecurityOptionsCreator> _soCreator;
         private FileConfiguration _fileConfig;
         private ReRouteOptions _rro;
         private string _requestId;
@@ -45,6 +45,7 @@
         private List<DownstreamHostAndPort> _dhp;
         private LoadBalancerOptions _lbo;
         private List<ReRoute> _result;
+        private SecurityOptions _securityOptions;
 
         public ReRoutesCreatorTests()
         {
@@ -61,6 +62,7 @@
             _daCreator = new Mock<IDownstreamAddressesCreator>();
             _lboCreator = new Mock<ILoadBalancerOptionsCreator>();
             _rrkCreator = new Mock<IReRouteKeyCreator>();
+            _soCreator = new Mock<ISecurityOptionsCreator>();
 
             _creator = new ReRoutesCreator(
                 _cthCreator.Object,
@@ -75,7 +77,8 @@
                 _hfarCreator.Object,
                 _daCreator.Object,
                 _lboCreator.Object,
-                _rrkCreator.Object
+                _rrkCreator.Object,
+                _soCreator.Object
                 );
         }
 
@@ -266,6 +269,7 @@
             _hfarCreator.Verify(x => x.Create(fileReRoute), Times.Once);
             _daCreator.Verify(x => x.Create(fileReRoute), Times.Once);
             _lboCreator.Verify(x => x.Create(fileReRoute.LoadBalancerOptions), Times.Once);
+            _soCreator.Verify(x => x.Create(fileReRoute.SecurityOptions), Times.Once);
         }
     }
 }

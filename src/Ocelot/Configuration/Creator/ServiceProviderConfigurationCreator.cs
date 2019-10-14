@@ -9,10 +9,11 @@ namespace Ocelot.Configuration.Creator
         {
             var port = globalConfiguration?.ServiceDiscoveryProvider?.Port ?? 0;
             var host = globalConfiguration?.ServiceDiscoveryProvider?.Host ?? "localhost";
-            var type = !string.IsNullOrEmpty(globalConfiguration?.ServiceDiscoveryProvider?.Type) 
-                ? globalConfiguration?.ServiceDiscoveryProvider?.Type 
+            var type = !string.IsNullOrEmpty(globalConfiguration?.ServiceDiscoveryProvider?.Type)
+                ? globalConfiguration?.ServiceDiscoveryProvider?.Type
                 : "consul";
             var pollingInterval = globalConfiguration?.ServiceDiscoveryProvider?.PollingInterval ?? 0;
+            var k8snamespace = globalConfiguration?.ServiceDiscoveryProvider?.Namespace ?? string.Empty;
 
             return new ServiceProviderConfigurationBuilder()
                 .WithHost(host)
@@ -21,6 +22,7 @@ namespace Ocelot.Configuration.Creator
                 .WithToken(globalConfiguration?.ServiceDiscoveryProvider?.Token)
                 .WithConfigurationKey(globalConfiguration?.ServiceDiscoveryProvider?.ConfigurationKey)
                 .WithPollingInterval(pollingInterval)
+                .WithNamespace(k8snamespace)
                 .Build();
         }
     }

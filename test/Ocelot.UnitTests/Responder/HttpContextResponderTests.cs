@@ -1,14 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Ocelot.Headers;
 using Ocelot.Middleware;
-using Ocelot.Middleware.Multiplexer;
 using Ocelot.Responder;
 using Shouldly;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
 using Xunit;
 
 namespace Ocelot.UnitTests.Responder
@@ -40,6 +39,23 @@ namespace Ocelot.UnitTests.Responder
         }
 
         [Fact]
+        public void should_ignore_content_if_null()
+        {
+            var httpContext = new DefaultHttpContext();
+            var response = new DownstreamResponse(null, HttpStatusCode.OK,
+                new List<KeyValuePair<string, IEnumerable<string>>>(), "some reason");
+
+            Should.NotThrow(() =>
+            {
+                _responder
+                    .SetResponseOnHttpContext(httpContext, response)
+                    .GetAwaiter()
+                    .GetResult()
+                ;
+            });
+        }
+
+        [Fact]
         public void should_have_content_length()
         {
             var httpContext = new DefaultHttpContext();
@@ -65,7 +81,6 @@ namespace Ocelot.UnitTests.Responder
             var header = httpContext.Response.Headers["test"];
             header.First().ShouldBe("test");
         }
-
 
         [Fact]
         public void should_add_reason_phrase()

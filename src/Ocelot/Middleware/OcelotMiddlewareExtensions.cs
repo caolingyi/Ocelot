@@ -1,22 +1,22 @@
 ﻿namespace Ocelot.Middleware
 {
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.Extensions.Options;
-    using System.Diagnostics;
     using DependencyInjection;
     using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Options;
     using Ocelot.Configuration;
     using Ocelot.Configuration.Creator;
     using Ocelot.Configuration.File;
     using Ocelot.Configuration.Repository;
     using Ocelot.Configuration.Setter;
-    using Ocelot.Responses;
     using Ocelot.Logging;
     using Ocelot.Middleware.Pipeline;
-    using Microsoft.Extensions.DependencyInjection;
+    using Ocelot.Responses;
+    using System;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Threading.Tasks;
 
     public static class OcelotMiddlewareExtensions
     {
@@ -40,6 +40,30 @@
             ConfigureDiagnosticListener(builder);
 
             return CreateOcelotPipeline(builder, pipelineConfiguration);
+        }
+
+        public static Task<IApplicationBuilder> UseOcelot(this IApplicationBuilder app, Action<IOcelotPipelineBuilder, OcelotPipelineConfiguration> builderAction)
+            => UseOcelot(app, builderAction, new OcelotPipelineConfiguration());
+
+        public static async Task<IApplicationBuilder> UseOcelot(this IApplicationBuilder app, Action<IOcelotPipelineBuilder, OcelotPipelineConfiguration> builderAction, OcelotPipelineConfiguration configuration)
+        {
+            await CreateConfiguration(app);  // initConfiguration
+
+            ConfigureDiagnosticListener(app);
+
+            var ocelotPipelineBuilder = new OcelotPipelineBuilder(app.ApplicationServices);
+            builderAction?.Invoke(ocelotPipelineBuilder, configuration ?? new OcelotPipelineConfiguration());
+
+            var ocelotDelegate = ocelotPipelineBuilder.Build();
+            app.Properties["analysis.NextMiddlewareName"] = "TransitionToOcelotMiddleware";
+
+            app.Use(async (context, task) =>
+            {
+                var downstreamContext = new DownstreamContext(context);
+                await ocelotDelegate.Invoke(downstreamContext);
+            });
+
+            return app;
         }
 
         private static IApplicationBuilder CreateOcelotPipeline(IApplicationBuilder builder, OcelotPipelineConfiguration pipelineConfiguration)
@@ -76,6 +100,7 @@
             // now create the config
             var internalConfigCreator = builder.ApplicationServices.GetService<IInternalConfigurationCreator>();
             var internalConfig = await internalConfigCreator.Create(fileConfig.CurrentValue);
+
             //Configuration error, throw error message
             if (internalConfig.IsError)
             {
@@ -102,9 +127,9 @@
                 await configuration(builder);
             }
 
-            if(AdministrationApiInUse(adminPath))
+            if (AdministrationApiInUse(adminPath))
             {
-                //We have to make sure the file config is set for the ocelot.env.json and ocelot.json so that if we pull it from the 
+                //We have to make sure the file config is set for the ocelot.env.json and ocelot.json so that if we pull it from the
                 //admin api it works...boy this is getting a spit spags boll.
                 var fileConfigSetter = builder.ApplicationServices.GetService<IFileConfigurationSetter>();
 

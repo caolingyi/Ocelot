@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Moq;
+﻿using Moq;
 using Ocelot.Configuration;
 using Ocelot.Configuration.Builder;
 using Ocelot.DownstreamRouteFinder;
@@ -8,6 +7,7 @@ using Ocelot.DownstreamRouteFinder.UrlMatcher;
 using Ocelot.Responses;
 using Ocelot.Values;
 using Shouldly;
+using System.Collections.Generic;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -132,7 +132,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
             var serviceProviderConfig = new ServiceProviderConfigurationBuilder().Build();
 
             this.Given(x => x.GivenThereIsAnUpstreamUrlPath("matchInUrlMatcher/"))
-                .And(x =>x.GivenTheTemplateVariableAndNameFinderReturns(
+                .And(x => x.GivenTheTemplateVariableAndNameFinderReturns(
                         new OkResponse<List<PlaceholderNameAndValue>>(
                             new List<PlaceholderNameAndValue>())))
                 .And(x => x.GivenTheConfigurationIs(new List<ReRoute>
@@ -174,7 +174,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
             var serviceProviderConfig = new ServiceProviderConfigurationBuilder().Build();
 
             this.Given(x => x.GivenThereIsAnUpstreamUrlPath("matchInUrlMatcher"))
-                .And(x =>x.GivenTheTemplateVariableAndNameFinderReturns(
+                .And(x => x.GivenTheTemplateVariableAndNameFinderReturns(
                         new OkResponse<List<PlaceholderNameAndValue>>(
                             new List<PlaceholderNameAndValue>())))
                 .And(x => x.GivenTheConfigurationIs(new List<ReRoute>
@@ -303,7 +303,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
 
         [Fact]
         public void should_not_return_route()
-        {            
+        {
             var serviceProviderConfig = new ServiceProviderConfigurationBuilder().Build();
 
             this.Given(x => x.GivenThereIsAnUpstreamUrlPath("dontMatchPath/"))
@@ -317,7 +317,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
                                 .Build())
                         .WithUpstreamHttpMethod(new List<string> { "Get" })
                         .WithUpstreamPathTemplate(new UpstreamPathTemplate("somePath", 1, false, "someUpstreamPath"))
-                        .Build(),   
+                        .Build(),
                      }, string.Empty, serviceProviderConfig
                  ))
                  .And(x => x.GivenTheUrlMatcherReturns(new OkResponse<UrlMatch>(new UrlMatch(false))))
@@ -624,7 +624,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
                 .And(x => x.GivenTheUrlMatcherReturns(new OkResponse<UrlMatch>(new UrlMatch(true))))
                 .And(x => x.GivenTheUpstreamHttpMethodIs("Get"))
                 .When(x => x.WhenICallTheFinder())
-                .And(x => x.ThenTheUrlMatcherIsCalledCorrectly(1))
+                .And(x => x.ThenTheUrlMatcherIsCalledCorrectly(1, 0))
                 .BDDfy();
         }
 
@@ -677,7 +677,8 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
                             .WithUpstreamPathTemplate(new UpstreamPathTemplate("someUpstreamPath", 1, false, "test"))
                             .Build()
                     )))
-                .And(x => x.ThenTheUrlMatcherIsCalledCorrectly(2))
+                .And(x => x.ThenTheUrlMatcherIsCalledCorrectly(1, 0))
+                .And(x => x.ThenTheUrlMatcherIsCalledCorrectly(1, 1))
                 .BDDfy();
         }
 
@@ -706,32 +707,32 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
         private void ThenTheUrlMatcherIsCalledCorrectly()
         {
             _mockMatcher
-                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern.Template, _reRoutesConfig[0].UpstreamTemplatePattern.ContainsQueryString), Times.Once);
+                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern), Times.Once);
         }
 
-        private void ThenTheUrlMatcherIsCalledCorrectly(int times)
+        private void ThenTheUrlMatcherIsCalledCorrectly(int times, int index = 0)
         {
             _mockMatcher
-                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern.OriginalValue, _reRoutesConfig[0].UpstreamTemplatePattern.ContainsQueryString), Times.Exactly(times));
+                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[index].UpstreamTemplatePattern), Times.Exactly(times));
         }
 
         private void ThenTheUrlMatcherIsCalledCorrectly(string expectedUpstreamUrlPath)
         {
             _mockMatcher
-                .Verify(x => x.Match(expectedUpstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern.OriginalValue, _reRoutesConfig[0].UpstreamTemplatePattern.ContainsQueryString), Times.Once);
+                .Verify(x => x.Match(expectedUpstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern), Times.Once);
         }
 
         private void ThenTheUrlMatcherIsNotCalled()
         {
             _mockMatcher
-                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern.OriginalValue, _reRoutesConfig[0].UpstreamTemplatePattern.ContainsQueryString), Times.Never);
+                .Verify(x => x.Match(_upstreamUrlPath, _upstreamQuery, _reRoutesConfig[0].UpstreamTemplatePattern), Times.Never);
         }
 
         private void GivenTheUrlMatcherReturns(Response<UrlMatch> match)
         {
             _match = match;
             _mockMatcher
-                .Setup(x => x.Match(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .Setup(x => x.Match(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UpstreamPathTemplate>()))
                 .Returns(_match);
         }
 
@@ -761,7 +762,7 @@ namespace Ocelot.UnitTests.DownstreamRouteFinder
                 _result.Data.TemplatePlaceholderNameAndValues[i].Name.ShouldBe(expected.TemplatePlaceholderNameAndValues[i].Name);
                 _result.Data.TemplatePlaceholderNameAndValues[i].Value.ShouldBe(expected.TemplatePlaceholderNameAndValues[i].Value);
             }
-            
+
             _result.IsError.ShouldBeFalse();
         }
     }

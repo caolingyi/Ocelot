@@ -1,11 +1,11 @@
 ﻿namespace Ocelot.Requester
 {
     using Logging;
+    using Ocelot.Infrastructure.RequestData;
     using System;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
-    using Ocelot.Infrastructure.RequestData;
 
     public class OcelotHttpTracingHandler : DelegatingHandler, ITracingHandler
     {
@@ -13,7 +13,7 @@
         private readonly IRequestScopedDataRepository _repo;
 
         public OcelotHttpTracingHandler(
-            ITracer tracer, 
+            ITracer tracer,
             IRequestScopedDataRepository repo,
             HttpMessageHandler httpMessageHandler = null)
         {
@@ -23,11 +23,10 @@
         }
 
         protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, 
+            HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            
-            return _tracer.SendAsync(request, cancellationToken, x => _repo.Add("TraceId", x), (r,c) => base.SendAsync(r, c));
+            return _tracer.SendAsync(request, cancellationToken, x => _repo.Add("TraceId", x), (r, c) => base.SendAsync(r, c));
         }
     }
 }

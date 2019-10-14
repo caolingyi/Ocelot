@@ -1,15 +1,15 @@
 ﻿namespace Ocelot.Configuration.Validator
 {
-    using FluentValidation;
-    using File;
     using Errors;
+    using File;
+    using FluentValidation;
+    using Microsoft.Extensions.DependencyInjection;
     using Responses;
+    using ServiceDiscovery;
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using System;
-    using Microsoft.Extensions.DependencyInjection;
-    using ServiceDiscovery;
 
     public class FileConfigurationFluentValidator : AbstractValidator<FileConfiguration>, IConfigurationValidator
     {
@@ -73,11 +73,11 @@
 
         private bool HaveServiceDiscoveryProviderRegistered(FileServiceDiscoveryProvider serviceDiscoveryProvider)
         {
-            if(serviceDiscoveryProvider == null)
+            if (serviceDiscoveryProvider == null)
             {
                 return true;
             }
-            
+
             if (serviceDiscoveryProvider?.Type?.ToLower() == "servicefabric")
             {
                 return true;
@@ -122,7 +122,7 @@
         {
             var matchingReRoutes = reRoutes
                 .Where(r => r.UpstreamPathTemplate == reRoute.UpstreamPathTemplate
-                            && (r.UpstreamHost != reRoute.UpstreamHost || reRoute.UpstreamHost == null))
+                            && (r.UpstreamHost == reRoute.UpstreamHost || reRoute.UpstreamHost == null))
                 .ToList();
 
             if (matchingReRoutes.Count == 1)

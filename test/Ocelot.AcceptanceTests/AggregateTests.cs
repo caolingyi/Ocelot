@@ -1,18 +1,15 @@
+using Microsoft.AspNetCore.Http;
+using Ocelot.Configuration.File;
+using Ocelot.Middleware;
+using Ocelot.Middleware.Multiplexer;
+using Shouldly;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Ocelot.Configuration.File;
-using Ocelot.Middleware;
-using Ocelot.Middleware.Multiplexer;
-using Shouldly;
 using TestStack.BDDfy;
 using Xunit;
 
@@ -142,6 +139,100 @@ namespace Ocelot.AcceptanceTests
         }
 
         [Fact]
+        public void should_return_response_200_with_advanced_aggregate_configs()
+        {
+            var configuration = new FileConfiguration
+            {
+                ReRoutes = new List<FileReRoute>
+                    {
+                        new FileReRoute
+                        {
+                            DownstreamPathTemplate = "/",
+                            DownstreamScheme = "http",
+                            DownstreamHostAndPorts = new List<FileHostAndPort>
+                            {
+                                new FileHostAndPort
+                                {
+                                    Host = "localhost",
+                                    Port = 51889,
+                                }
+                            },
+                            UpstreamPathTemplate = "/Comments",
+                            UpstreamHttpMethod = new List<string> { "Get" },
+                            Key = "Comments"
+                        },
+                        new FileReRoute
+                        {
+                            DownstreamPathTemplate = "/users/{userId}",
+                            DownstreamScheme = "http",
+                            DownstreamHostAndPorts = new List<FileHostAndPort>
+                            {
+                                new FileHostAndPort
+                                {
+                                    Host = "localhost",
+                                    Port = 51890,
+                                }
+                            },
+                            UpstreamPathTemplate = "/UserDetails",
+                            UpstreamHttpMethod = new List<string> { "Get" },
+                            Key = "UserDetails"
+                        },
+                        new FileReRoute
+                        {
+                            DownstreamPathTemplate = "/posts/{postId}",
+                            DownstreamScheme = "http",
+                            DownstreamHostAndPorts = new List<FileHostAndPort>
+                            {
+                                new FileHostAndPort
+                                {
+                                    Host = "localhost",
+                                    Port = 51887,
+                                }
+                            },
+                            UpstreamPathTemplate = "/PostDetails",
+                            UpstreamHttpMethod = new List<string> { "Get" },
+                            Key = "PostDetails"
+                        }
+                    },
+                Aggregates = new List<FileAggregateReRoute>
+                    {
+                        new FileAggregateReRoute
+                        {
+                            UpstreamPathTemplate = "/",
+                            UpstreamHost = "localhost",
+                            ReRouteKeys = new List<string>
+                            {
+                                "Comments",
+                                "UserDetails",
+                                "PostDetails"
+                            },
+                            ReRouteKeysConfig = new List<AggregateReRouteConfig>()
+                            {
+                                new AggregateReRouteConfig(){ReRouteKey = "UserDetails",JsonPath = "$[*].writerId",Parameter = "userId"},
+                                new AggregateReRouteConfig(){ReRouteKey = "PostDetails",JsonPath = "$[*].postId",Parameter = "postId"}
+                            },
+                        }
+                    }
+            };
+
+            var userDetailsResponseContent = @"{""id"":1,""firstName"":""abolfazl"",""lastName"":""rajabpour""}";
+            var postDetailsResponseContent = @"{""id"":1,""title"":""post1""}";
+            var commentsResponseContent = @"[{""id"":1,""writerId"":1,""postId"":2,""text"":""text1""},{""id"":2,""writerId"":1,""postId"":2,""text"":""text2""}]";
+
+            var expected = "{\"Comments\":" + commentsResponseContent + ",\"UserDetails\":" + userDetailsResponseContent + ",\"PostDetails\":" + postDetailsResponseContent + "}";
+
+            this.Given(x => x.GivenServiceOneIsRunning("http://localhost:51889", "/", 200, commentsResponseContent))
+                .Given(x => x.GivenServiceTwoIsRunning("http://localhost:51890", "/users/1", 200, userDetailsResponseContent))
+                .Given(x => x.GivenServiceTwoIsRunning("http://localhost:51887", "/posts/2", 200, postDetailsResponseContent))
+                .And(x => _steps.GivenThereIsAConfiguration(configuration))
+                .And(x => _steps.GivenOcelotIsRunning())
+                .When(x => _steps.WhenIGetUrlOnTheApiGateway("/"))
+                .Then(x => _steps.ThenTheStatusCodeShouldBe(HttpStatusCode.OK))
+                .And(x => _steps.ThenTheResponseBodyShouldBe(expected))
+                .BDDfy();
+        }
+
+        [Fact]
         public void should_return_response_200_with_simple_url_user_defined_aggregate()
         {
             var configuration = new FileConfiguration
@@ -189,8 +280,8 @@ namespace Ocelot.AcceptanceTests
                             UpstreamHost = "localhost",
                             ReRouteKeys = new List<string>
                             {
-                                "Tom",
-                                "Laura"
+                                "Laura",
+                                "Tom"
                             },
                             Aggregator = "FakeDefinedAggregator"
                         }
@@ -258,8 +349,8 @@ namespace Ocelot.AcceptanceTests
                             UpstreamHost = "localhost",
                             ReRouteKeys = new List<string>
                             {
-                                "Tom",
-                                "Laura"
+                                "Laura",
+                                "Tom"
                             }
                         }
                     }
@@ -326,8 +417,8 @@ namespace Ocelot.AcceptanceTests
                             UpstreamHost = "localhost",
                             ReRouteKeys = new List<string>
                             {
-                                "Tom",
-                                "Laura"
+                                "Laura",
+                                "Tom"
                             }
                         }
                     }
@@ -394,8 +485,8 @@ namespace Ocelot.AcceptanceTests
                             UpstreamHost = "localhost",
                             ReRouteKeys = new List<string>
                             {
-                                "Tom",
-                                "Laura"
+                                "Laura",
+                                "Tom"
                             }
                         }
                     }
@@ -462,8 +553,8 @@ namespace Ocelot.AcceptanceTests
                             UpstreamHost = "localhost",
                             ReRouteKeys = new List<string>
                             {
-                                "Tom",
-                                "Laura"
+                                "Laura",
+                                "Tom"
                             }
                         }
                     }
@@ -551,14 +642,14 @@ namespace Ocelot.AcceptanceTests
             _dep = dep;
         }
 
-        public async Task<DownstreamResponse> Aggregate(List<DownstreamResponse> responses)
+        public async Task<DownstreamResponse> Aggregate(List<DownstreamContext> responses)
         {
-            var one = await responses[0].Content.ReadAsStringAsync();
-            var two = await responses[1].Content.ReadAsStringAsync();
+            var one = await responses[0].DownstreamResponse.Content.ReadAsStringAsync();
+            var two = await responses[1].DownstreamResponse.Content.ReadAsStringAsync();
 
             var merge = $"{one}, {two}";
             merge = merge.Replace("Hello", "Bye").Replace("{", "").Replace("}", "");
-            var headers = responses.SelectMany(x => x.Headers).ToList();
+            var headers = responses.SelectMany(x => x.DownstreamResponse.Headers).ToList();
             return new DownstreamResponse(new StringContent(merge), HttpStatusCode.OK, headers, "some reason");
         }
     }

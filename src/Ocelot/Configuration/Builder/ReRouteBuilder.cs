@@ -1,9 +1,10 @@
 ﻿namespace Ocelot.Configuration.Builder
 {
-    using System.Collections.Generic;
-    using System.Net.Http;
+    using Ocelot.Configuration.File;
     using Ocelot.Values;
+    using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Http;
 
     public class ReRouteBuilder
     {
@@ -11,11 +12,13 @@
         private List<HttpMethod> _upstreamHttpMethod;
         private string _upstreamHost;
         private List<DownstreamReRoute> _downstreamReRoutes;
+        private List<AggregateReRouteConfig> _downstreamReRoutesConfig;
         private string _aggregator;
 
         public ReRouteBuilder()
         {
             _downstreamReRoutes = new List<DownstreamReRoute>();
+            _downstreamReRoutesConfig = new List<AggregateReRouteConfig>();
         }
 
         public ReRouteBuilder WithDownstreamReRoute(DownstreamReRoute value)
@@ -48,6 +51,12 @@
             return this;
         }
 
+        public ReRouteBuilder WithAggregateReRouteConfig(List<AggregateReRouteConfig> aggregateReRouteConfigs)
+        {
+            _downstreamReRoutesConfig = aggregateReRouteConfigs;
+            return this;
+        }
+
         public ReRouteBuilder WithAggregator(string aggregator)
         {
             _aggregator = aggregator;
@@ -57,9 +66,10 @@
         public ReRoute Build()
         {
             return new ReRoute(
-                _downstreamReRoutes, 
-                _upstreamHttpMethod, 
-                _upstreamTemplatePattern, 
+                _downstreamReRoutes,
+                _downstreamReRoutesConfig,
+                _upstreamHttpMethod,
+                _upstreamTemplatePattern,
                 _upstreamHost,
                 _aggregator
                 );

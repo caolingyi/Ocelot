@@ -3,9 +3,11 @@ namespace Ocelot.DependencyInjection
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
     using Ocelot.Authorisation;
     using Ocelot.Cache;
     using Ocelot.Claims;
+    using Ocelot.Configuration;
     using Ocelot.Configuration.Creator;
     using Ocelot.Configuration.File;
     using Ocelot.Configuration.Parser;
@@ -16,30 +18,34 @@ namespace Ocelot.DependencyInjection
     using Ocelot.DownstreamRouteFinder.UrlMatcher;
     using Ocelot.DownstreamUrlCreator.UrlTemplateReplacer;
     using Ocelot.Headers;
+    using Ocelot.Infrastructure;
     using Ocelot.Infrastructure.Claims.Parser;
     using Ocelot.Infrastructure.RequestData;
     using Ocelot.LoadBalancer.LoadBalancers;
     using Ocelot.Logging;
     using Ocelot.Middleware;
+    using Ocelot.Middleware.Multiplexer;
+    using Ocelot.PathManipulation;
     using Ocelot.QueryStrings;
     using Ocelot.RateLimit;
+    using Ocelot.Request.Creator;
     using Ocelot.Request.Mapper;
     using Ocelot.Requester;
     using Ocelot.Requester.QoS;
     using Ocelot.Responder;
+    using Ocelot.Security;
+    using Ocelot.Security.IPSecurity;
     using Ocelot.ServiceDiscovery;
-    using System.Reflection;
-    using Ocelot.Configuration;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
+    using System;
+    using System.Linq;
     using System.Net.Http;
-    using Ocelot.Infrastructure;
-    using Ocelot.Middleware.Multiplexer;
-    using Ocelot.Request.Creator;
+    using System.Reflection;
 
     public class OcelotBuilder : IOcelotBuilder
     {
         public IServiceCollection Services { get; }
         public IConfiguration Configuration { get; }
+        public IMvcCoreBuilder MvcCoreBuilder { get; }
 
         public OcelotBuilder(IServiceCollection services, IConfiguration configurationRoot)
         {
@@ -55,21 +61,21 @@ namespace Ocelot.DependencyInjection
             Services.TryAddSingleton<IInternalConfigurationCreator, FileInternalConfigurationCreator>();
             Services.TryAddSingleton<IInternalConfigurationRepository, InMemoryInternalConfigurationRepository>();
             Services.TryAddSingleton<IConfigurationValidator, FileConfigurationFluentValidator>();
-            Services.AddSingleton<HostAndPortValidator>();
-            Services.AddSingleton<IReRoutesCreator, ReRoutesCreator>();
-            Services.AddSingleton<IAggregatesCreator, AggregatesCreator>();
-            Services.AddSingleton<IReRouteKeyCreator, ReRouteKeyCreator>();
-            Services.AddSingleton<IConfigurationCreator, ConfigurationCreator>();
-            Services.AddSingleton<IDynamicsCreator, DynamicsCreator>();
-            Services.AddSingleton<ILoadBalancerOptionsCreator, LoadBalancerOptionsCreator>();
-            Services.AddSingleton<ReRouteFluentValidator>();
-            Services.AddSingleton<FileGlobalConfigurationFluentValidator>();
-            Services.AddSingleton<FileQoSOptionsFluentValidator>();
+            Services.TryAddSingleton<HostAndPortValidator>();
+            Services.TryAddSingleton<IReRoutesCreator, ReRoutesCreator>();
+            Services.TryAddSingleton<IAggregatesCreator, AggregatesCreator>();
+            Services.TryAddSingleton<IReRouteKeyCreator, ReRouteKeyCreator>();
+            Services.TryAddSingleton<IConfigurationCreator, ConfigurationCreator>();
+            Services.TryAddSingleton<IDynamicsCreator, DynamicsCreator>();
+            Services.TryAddSingleton<ILoadBalancerOptionsCreator, LoadBalancerOptionsCreator>();
+            Services.TryAddSingleton<ReRouteFluentValidator>();
+            Services.TryAddSingleton<FileGlobalConfigurationFluentValidator>();
+            Services.TryAddSingleton<FileQoSOptionsFluentValidator>();
             Services.TryAddSingleton<IClaimsToThingCreator, ClaimsToThingCreator>();
             Services.TryAddSingleton<IAuthenticationOptionsCreator, AuthenticationOptionsCreator>();
             Services.TryAddSingleton<IUpstreamTemplatePatternCreator, UpstreamTemplatePatternCreator>();
             Services.TryAddSingleton<IRequestIdKeyCreator, RequestIdKeyCreator>();
-            Services.TryAddSingleton<IServiceProviderConfigurationCreator,ServiceProviderConfigurationCreator>();
+            Services.TryAddSingleton<IServiceProviderConfigurationCreator, ServiceProviderConfigurationCreator>();
             Services.TryAddSingleton<IQoSOptionsCreator, QoSOptionsCreator>();
             Services.TryAddSingleton<IReRouteOptionsCreator, ReRouteOptionsCreator>();
             Services.TryAddSingleton<IRateLimitOptionsCreator, RateLimitOptionsCreator>();
@@ -88,6 +94,7 @@ namespace Ocelot.DependencyInjection
             Services.TryAddSingleton<IAddClaimsToRequest, AddClaimsToRequest>();
             Services.TryAddSingleton<IAddHeadersToRequest, AddHeadersToRequest>();
             Services.TryAddSingleton<IAddQueriesToRequest, AddQueriesToRequest>();
+            Services.TryAddSingleton<IChangeDownstreamPathTemplate, ChangeDownstreamPathTemplate>();
             Services.TryAddSingleton<IClaimsParser, ClaimsParser>();
             Services.TryAddSingleton<IUrlPathToUrlTemplateMatcher, RegExUrlMatcher>();
             Services.TryAddSingleton<IPlaceholderNameAndValueFinder, UrlPathPlaceholderNameAndValueFinder>();
@@ -104,7 +111,7 @@ namespace Ocelot.DependencyInjection
             Services.TryAddSingleton<IHttpHandlerOptionsCreator, HttpHandlerOptionsCreator>();
             Services.TryAddSingleton<IDownstreamAddressesCreator, DownstreamAddressesCreator>();
             Services.TryAddSingleton<IDelegatingHandlerHandlerFactory, DelegatingHandlerHandlerFactory>();
-            Services.TryAddSingleton<IHttpRequester, HttpClientHttpRequester>();
+            Services.TryAddSingleton<ICacheKeyGenerator, CacheKeyGenerator>();
 
             // see this for why we register this as singleton http://stackoverflow.com/questions/37371264/invalidoperationexception-unable-to-resolve-service-for-type-microsoft-aspnetc
             // could maybe use a scoped data repository
@@ -114,7 +121,7 @@ namespace Ocelot.DependencyInjection
             Services.TryAddSingleton<OcelotDiagnosticListener>();
             Services.TryAddSingleton<IMultiplexer, Multiplexer>();
             Services.TryAddSingleton<IResponseAggregator, SimpleJsonResponseAggregator>();
-            Services.AddSingleton<ITracingHandlerFactory, TracingHandlerFactory>();
+            Services.TryAddSingleton<ITracingHandlerFactory, TracingHandlerFactory>();
             Services.TryAddSingleton<IFileConfigurationPollerOptions, InMemoryFileConfigurationPollerOptions>();
             Services.TryAddSingleton<IAddHeadersToResponse, AddHeadersToResponse>();
             Services.TryAddSingleton<IPlaceholders, Placeholders>();
@@ -125,41 +132,73 @@ namespace Ocelot.DependencyInjection
             Services.TryAddSingleton<IQoSFactory, QoSFactory>();
             Services.TryAddSingleton<IExceptionToErrorMapper, HttpExeptionToErrorMapper>();
 
+            //add security
+            this.AddSecurity();
+
             //add asp.net services..
             var assembly = typeof(FileConfigurationController).GetTypeInfo().Assembly;
 
-            Services.AddMvcCore()
-                .AddApplicationPart(assembly)
-                .AddControllersAsServices()
-                .AddAuthorization()
-                .AddJsonFormatters();
+            this.MvcCoreBuilder = Services.AddMvcCore()
+                  .AddApplicationPart(assembly)
+                  .AddControllersAsServices()
+                  .AddAuthorization()
+                  .AddJsonFormatters();
 
             Services.AddLogging();
             Services.AddMiddlewareAnalysis();
             Services.AddWebEncoders();
         }
 
-        public IOcelotBuilder AddSingletonDefinedAggregator<T>() 
+        public IOcelotBuilder AddSingletonDefinedAggregator<T>()
             where T : class, IDefinedAggregator
         {
             Services.AddSingleton<IDefinedAggregator, T>();
             return this;
         }
 
-        public IOcelotBuilder AddTransientDefinedAggregator<T>() 
+        public IOcelotBuilder AddTransientDefinedAggregator<T>()
             where T : class, IDefinedAggregator
         {
             Services.AddTransient<IDefinedAggregator, T>();
             return this;
         }
 
-        public IOcelotBuilder AddDelegatingHandler<THandler>(bool global = false) 
-            where THandler : DelegatingHandler 
+        private void AddSecurity()
         {
-            if(global)
+            Services.TryAddSingleton<ISecurityOptionsCreator, SecurityOptionsCreator>();
+            Services.TryAddSingleton<ISecurityPolicy, IPSecurityPolicy>();
+        }
+
+        public IOcelotBuilder AddDelegatingHandler(Type delegateType, bool global = false)
+        {
+            if (!typeof(DelegatingHandler).IsAssignableFrom(delegateType)) throw new ArgumentOutOfRangeException(nameof(delegateType), delegateType.Name, "It is not a delegatin handler");
+
+            if (global)
+            {
+                Services.AddTransient(delegateType);
+                Services.AddTransient<GlobalDelegatingHandler>(s =>
+                {
+
+                    var service = s.GetService(delegateType) as DelegatingHandler;
+                    return new GlobalDelegatingHandler(service);
+                });
+            }
+            else
+            {
+                Services.AddTransient(typeof(DelegatingHandler), delegateType);
+            }
+
+            return this;
+        }
+
+        public IOcelotBuilder AddDelegatingHandler<THandler>(bool global = false)
+            where THandler : DelegatingHandler
+        {
+            if (global)
             {
                 Services.AddTransient<THandler>();
-                Services.AddTransient<GlobalDelegatingHandler>(s => {
+                Services.AddTransient<GlobalDelegatingHandler>(s =>
+                {
                     var service = s.GetService<THandler>();
                     return new GlobalDelegatingHandler(service);
                 });
@@ -170,6 +209,40 @@ namespace Ocelot.DependencyInjection
             }
 
             return this;
+        }
+
+        public IOcelotBuilder AddConfigPlaceholders()
+        {
+            // see: https://greatrexpectations.com/2018/10/25/decorators-in-net-core-with-dependency-injection
+            var wrappedDescriptor = Services.First(x => x.ServiceType == typeof(IPlaceholders));
+            
+            var objectFactory = ActivatorUtilities.CreateFactory(
+                typeof(ConfigAwarePlaceholders),
+                new[] { typeof(IPlaceholders) });
+
+            Services.Replace(ServiceDescriptor.Describe(
+                typeof(IPlaceholders),
+                s => (IPlaceholders) objectFactory(s,
+                    new[] {CreateInstance(s, wrappedDescriptor)}),
+                wrappedDescriptor.Lifetime
+            ));
+
+            return this;
+        }
+        
+        private static object CreateInstance(IServiceProvider services, ServiceDescriptor descriptor)
+        {
+            if (descriptor.ImplementationInstance != null)
+            {
+                return descriptor.ImplementationInstance;
+            }
+
+            if (descriptor.ImplementationFactory != null)
+            {
+                return descriptor.ImplementationFactory(services);
+            }
+
+            return ActivatorUtilities.GetServiceOrCreateInstance(services, descriptor.ImplementationType);
         }
     }
 }
